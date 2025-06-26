@@ -25,6 +25,7 @@ div.box {
 div#zentai > div {
 	margin-left: 5px;
 	background-color: #fad9d9;
+    border: thick double rgb(0, 0, 0);
 }
 h2{
     font-size: 30px;
