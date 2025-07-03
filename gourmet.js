@@ -10,7 +10,7 @@ function print(data) {
   console.log("営業時間:", data.results.shop[0].open);
   console.log("最寄駅:", data.results.shop[0].station_name);
   console.log("サブジャンル:", data.results.shop[0].sub_genre.name);
-  console.log("ロゴイメージ(pc)", data.results.shop[0].photo.pc.l);
+  console.log("ロゴイメージ(pc)", data.results.shop[0].logo_image);
   console.log("2件目の検索結果");
   console.log("名前:", data.results.shop[1].name);
   console.log("住所:", data.results.shop[1].address);
@@ -20,13 +20,71 @@ function print(data) {
   console.log("営業時間:", data.results.shop[1].open);
   console.log("最寄駅:", data.results.shop[1].station_name);
   console.log("サブジャンル:", data.results.shop[1].sub_genre.name);
-  console.log("ロゴイメージ(pc)", data.results.shop[1].photo.pc.l);
+  console.log("ロゴイメージ(pc)", data.results.shop[1].logo_image);
 }
 
 // 課題5-1 の関数 printDom() はここに記述すること
-function printDom(data) {
+function printDom() {
+  let r = document.createElement('div');
+  r.classList.add('box');
+  r.setAttribute('id', 'result');
+  let b = document.querySelector('body');
+  b.insertAdjacentElement('beforeend', r);
 
+  for (let shop of data.results.shop) {
+    let d = document.createElement('div');
+
+
+    let h2 = document.createElement('h2');
+    h2.textContent = shop.name;
+    h2.classList.add('h2');
+    d.insertAdjacentElement('beforeend', h2);
+
+
+    let u = document.createElement('ul');
+
+    let l = document.createElement('li');
+    l.textContent = '住所: ' + shop.address;
+    u.insertAdjacentElement('beforeend', l);
+
+    l = document.createElement('li');
+    l.textContent = '予算: ' + shop.budget.name;
+    u.insertAdjacentElement('beforeend', l);
+
+    l = document.createElement('li');
+    l.textContent = 'キャッチコピー: ' + shop.catch;
+    u.insertAdjacentElement('beforeend', l);
+
+    l = document.createElement('li');
+    l.textContent = 'ジャンル: ' + shop.genre.name;
+    u.insertAdjacentElement('beforeend', l);
+
+    l = document.createElement('li');
+    l.textContent = '営業時間: ' + shop.open;
+    u.insertAdjacentElement('beforeend', l);
+
+    l = document.createElement('li');
+    l.textContent = '最寄駅: ' + shop.station_name;
+    u.insertAdjacentElement('beforeend', l);
+
+    l = document.createElement('li');
+    l.textContent = 'サブジャンル: ' + shop.sub_genre.name;
+    u.insertAdjacentElement('beforeend', l);
+
+    let img = document.createElement('img');
+    img.classList.add('sign');
+    img.setAttribute('src', shop.logo_image);
+
+    d.insertAdjacentElement('beforeend', img);
+
+
+    d.insertAdjacentElement('beforeend', u);
+
+
+    r.insertAdjacentElement('beforeend', d);
+  }
 }
+
 
 // 課題6-1 のイベントハンドラ登録処理は以下に記述
 
