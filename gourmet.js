@@ -1,7 +1,7 @@
 
 // 課題3-2 のプログラムはこの関数の中に記述すること
 function print(data) {
-  for(let i = 0; i < data.results.shop.length; i++){
+  for (let i = 0; i < data.results.shop.length; i++) {
     console.log((i + 1) + "件目の検索結果");
     console.log("名前:", data.results.shop[i].name);
     console.log("住所:", data.results.shop[i].address);
@@ -10,7 +10,11 @@ function print(data) {
     console.log("ジャンル:", data.results.shop[i].genre.name);
     console.log("営業時間:", data.results.shop[i].open);
     console.log("最寄駅:", data.results.shop[i].station_name);
-    console.log("サブジャンル:", data.results.shop[i].sub_genre.name);
+    if (data.results.shop[i].sub_genre) {
+      console.log("サブジャンル:", data.results.shop[i].sub_genre.name);
+    } else {
+      console.log("サブジャンル: なし");
+    }
     console.log("ロゴイメージ(pc)", data.results.shop[i].logo_image);
   }
 }
@@ -72,7 +76,11 @@ function printDom(data) {
     u.insertAdjacentElement('beforeend', l);
 
     l = document.createElement('li');
-    l.textContent = 'サブジャンル: ' + shop.sub_genre.name;
+    if (shop.sub_genre) {
+      l.textContent = 'サブジャンル: ' + shop.sub_genre.name;
+    } else {
+      l.textContent = 'サブジャンル: なし';
+    }
     u.insertAdjacentElement('beforeend', l);
 
     let img = document.createElement('img');
@@ -103,9 +111,9 @@ b.addEventListener('click', sendRequest);
 // 通信を開始する処理
 function sendRequest() {
   let genre = document.getElementById('genre').value;
-  console.log("選択されたジャンル:", genre); 
+  console.log("選択されたジャンル:", genre);
   let url = 'https://www.nishita-lab.org/web-contents/jsons/hotpepper/' + genre + '.json';
-  console.log("アクセスするURL:", url); 
+  console.log("アクセスするURL:", url);
   axios.get(url)
     .then(showResult)
     .catch(showError)
