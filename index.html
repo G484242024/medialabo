@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>English Vocabulary Trainer</title>
+<style>
+:root{--bg:#eef3f8;--panel:#fff;--ink:#162033;--muted:#687386;--line:#d8e0ea;--main:#2f6fed;--ok:#16803a;--bad:#c53b3b}
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:var(--bg);color:var(--ink)}
+.app{max-width:820px;margin:auto;padding:20px} h1{margin:0 0 6px;font-size:clamp(26px,5vw,38px)} .sub{margin:0 0 18px;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:0 14px 35px rgba(30,50,80,.09);overflow:hidden}
+.controls{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;padding:14px;border-bottom:1px solid var(--line)}
+select,button,input{font:inherit} select,button{padding:11px 12px;border-radius:11px;border:1px solid var(--line);background:#fff}
+button{cursor:pointer} .primary{background:var(--main);color:#fff;border-color:var(--main);font-weight:700}
+.quiz{padding:clamp(22px,5vw,42px)} .top{display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
+.progress{height:8px;background:#e8edf4;border-radius:99px;overflow:hidden;margin:10px 0 28px} #bar{height:100%;width:0;background:var(--main)}
+.label{text-align:center;color:var(--muted);font-size:14px} #question{font-size:clamp(28px,7vw,48px);font-weight:800;text-align:center;line-height:1.35;min-height:110px;display:grid;place-items:center;padding:10px}
+#extra{text-align:center;color:var(--muted);min-height:24px;margin-bottom:18px} .inputrow{display:flex;gap:10px} input{flex:1;padding:15px;border:2px solid var(--line);border-radius:13px;font-size:20px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px} .choice{padding:15px;border:1px solid var(--line);border-radius:13px;background:#fff;text-align:left}
+.choice:hover{border-color:var(--main)} .feedback{display:none;margin-top:16px;padding:13px;border-radius:12px;line-height:1.6} .ok{display:block;background:#eaf8ef;color:var(--ok)} .bad{display:block;background:#fff0f0;color:var(--bad)}
+.actions{display:flex;justify-content:center;gap:10px;margin-top:16px} #next{display:none} .result{display:none;text-align:center;padding:38px 20px} .big{font-size:54px;font-weight:800;color:var(--main)}
+.list{margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px} details{margin:8px 0} table{width:100%;border-collapse:collapse} td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left;font-size:14px}
+@media(max-width:620px){.controls{grid-template-columns:1fr}.choices{grid-template-columns:1fr}.inputrow{flex-direction:column}}
+</style>
+</head>
+<body>
+<main class="app">
+<h1>English Vocabulary Trainer</h1>
+<p class="sub">画像の単語を、スペル入力と4択で練習できます。</p>
+<section class="card">
+<div class="controls">
+<select id="section"><option value="All">すべての範囲</option></select>
+<select id="mode">
+<option value="ja-en-type">意味 → 英語（スペル入力）</option>
+<option value="ja-en-choice">意味 → 英語（4択）</option>
+<option value="en-ja-type">英語 → 意味（手入力）</option>
+<option value="en-ja-choice">英語 → 意味（4択）</option>
+</select>
+<button id="restart">最初から</button>
+</div>
+<div id="quiz" class="quiz">
+<div class="top"><span id="count"></span><span id="score">正解 0</span></div>
+<div class="progress"><div id="bar"></div></div>
+<div id="label" class="label"></div>
+<div id="question"></div>
+<div id="extra"></div>
+<div id="answerArea"></div>
+<div id="feedback" class="feedback"></div>
+<div class="actions"><button id="next" class="primary">次の問題</button></div>
+</div>
+<div id="result" class="result">
+<h2>終了</h2><div id="final" class="big"></div><p id="msg"></p>
+<button id="again" class="primary">もう一度</button>
+</div>
+</section>
+<section class="list"><details><summary>収録単語一覧を表示</summary><div id="tables"></div></details></section>
+</main>
+<script>
+const WORDS=[{"section": "Units", "en": "square meter", "ja": "平方メートル", "extra": "m²"}, {"section": "Units", "en": "gram per cubic centimeter", "ja": "1立方センチメートルあたりのグラム", "extra": "g/cm³"}, {"section": "Units", "en": "megapascal", "ja": "メガパスカル", "extra": "MPa"}, {"section": "Units", "en": "degree Celsius", "ja": "摂氏", "extra": "°C"}, {"section": "Units", "en": "second", "ja": "秒", "extra": "s"}, {"section": "Units", "en": "volt", "ja": "ボルト", "extra": "V"}, {"section": "Units", "en": "milliliter", "ja": "ミリリットル", "extra": "mL"}, {"section": "Units", "en": "cubic meter", "ja": "立方メートル", "extra": "m³"}, {"section": "Units", "en": "gram", "ja": "グラム", "extra": "g"}, {"section": "Units", "en": "ton", "ja": "トン", "extra": "t"}, {"section": "Homonyms", "en": "application", "ja": "一般：申請・応募／専門：アプリケーション"}, {"section": "Homonyms", "en": "cell", "ja": "一般：個室・小部屋／専門：細胞"}, {"section": "Homonyms", "en": "charge", "ja": "一般：料金・請求する／専門：電荷・帯電する"}, {"section": "Homonyms", "en": "compound", "ja": "一般：複合の・混ぜ合わせる／専門：化合物"}, {"section": "Homonyms", "en": "concentration", "ja": "一般：集中・注意力／専門：濃度"}, {"section": "Homonyms", "en": "culture", "ja": "一般：文化／専門：培養"}, {"section": "Homonyms", "en": "current", "ja": "一般：現在の／専門：電流"}, {"section": "Homonyms", "en": "degree", "ja": "一般：程度・学位／専門：度・角度"}, {"section": "Homonyms", "en": "frequency", "ja": "一般：頻度／専門：周波数"}, {"section": "Homonyms", "en": "mass", "ja": "一般：大量・集団／専門：質量"}, {"section": "Homonyms", "en": "potential", "ja": "一般：可能性／専門：電位"}, {"section": "Homonyms", "en": "solution", "ja": "一般：解決策／専門：溶液"}, {"section": "Homonyms", "en": "tissue", "ja": "一般：ティッシュペーパー／専門：組織"}, {"section": "Homonyms", "en": "wave", "ja": "一般：波・手を振る／専門：波動"}, {"section": "Vocabulary 1", "en": "accessibility", "ja": "利用しやすさ、入手のしやすさ"}, {"section": "Vocabulary 1", "en": "annual", "ja": "年に一度の、毎年の"}, {"section": "Vocabulary 1", "en": "antimicrobial", "ja": "抗菌の"}, {"section": "Vocabulary 1", "en": "attendee", "ja": "出席者"}, {"section": "Vocabulary 1", "en": "enhance", "ja": "高める"}, {"section": "Vocabulary 1", "en": "figure", "ja": "図"}, {"section": "Vocabulary 1", "en": "figure out", "ja": "～を理解する、～を把握する"}, {"section": "Vocabulary 1", "en": "follow up with", "ja": "（確認後に）～に連絡する"}, {"section": "Vocabulary 1", "en": "fragile", "ja": "壊れやすい"}, {"section": "Vocabulary 1", "en": "high-spec", "ja": "高性能の"}, {"section": "Vocabulary 1", "en": "moreover", "ja": "さらに、その上"}, {"section": "Vocabulary 1", "en": "promising", "ja": "有望な"}, {"section": "Vocabulary 1", "en": "rock formation", "ja": "岩石形成"}, {"section": "Vocabulary 1", "en": "strength", "ja": "強さ、強度"}, {"section": "Vocabulary 1", "en": "summarize", "ja": "要約する"}, {"section": "Vocabulary 1", "en": "time-consuming", "ja": "時間がかかる"}, {"section": "Vocabulary 1", "en": "trial and error", "ja": "試行錯誤"}, {"section": "Vocabulary 1", "en": "unique", "ja": "珍しい、独自の"}, {"section": "Position", "en": "bottom center", "ja": "下中央"}, {"section": "Position", "en": "bottom left", "ja": "左下"}, {"section": "Position", "en": "bottom right", "ja": "右下"}, {"section": "Position", "en": "center", "ja": "中央"}, {"section": "Position", "en": "lower left", "ja": "左下"}, {"section": "Position", "en": "lower right", "ja": "右下"}, {"section": "Position", "en": "middle", "ja": "中央"}, {"section": "Position", "en": "top center", "ja": "上中央"}, {"section": "Position", "en": "top left", "ja": "左上"}, {"section": "Position", "en": "top right", "ja": "右上"}, {"section": "Position", "en": "upper left", "ja": "左上"}, {"section": "Position", "en": "upper right", "ja": "右上"}, {"section": "Vocabulary 2", "en": "absorbance spectrum", "ja": "吸光度スペクトル"}, {"section": "Vocabulary 2", "en": "analyze", "ja": "分析する"}, {"section": "Vocabulary 2", "en": "closed-toe shoe", "ja": "つま先まで覆われている靴"}, {"section": "Vocabulary 2", "en": "component", "ja": "部品"}, {"section": "Vocabulary 2", "en": "composition", "ja": "組成"}, {"section": "Vocabulary 2", "en": "determine", "ja": "判定する、決定する"}, {"section": "Vocabulary 2", "en": "exactly", "ja": "その通り"}, {"section": "Vocabulary 2", "en": "human movement", "ja": "人間の動き"}, {"section": "Vocabulary 2", "en": "identify", "ja": "特定する、識別する"}, {"section": "Vocabulary 2", "en": "immersive", "ja": "没入感のある"}, {"section": "Vocabulary 2", "en": "magnetic field", "ja": "磁場"}, {"section": "Vocabulary 2", "en": "mass", "ja": "質量"}, {"section": "Vocabulary 2", "en": "optical", "ja": "光学の"}, {"section": "Vocabulary 2", "en": "prototype", "ja": "試作品、原型"}, {"section": "Vocabulary 2", "en": "range", "ja": "範囲"}, {"section": "Vocabulary 2", "en": "three-dimensional object", "ja": "3次元の物体"}, {"section": "Vocabulary 2", "en": "track", "ja": "追跡する"}, {"section": "Vocabulary 2", "en": "view", "ja": "見る"}, {"section": "Equipment", "en": "DNA sequence", "ja": "DNA配列"}, {"section": "Equipment", "en": "electron microscope", "ja": "電子顕微鏡"}, {"section": "Equipment", "en": "mass spectrometer", "ja": "質量分析計"}, {"section": "Equipment", "en": "spectrophotometer", "ja": "分光光度計"}, {"section": "Equipment", "en": "tensile testing machine", "ja": "引張試験機"}, {"section": "Equipment", "en": "wavelength", "ja": "波長"}, {"section": "Equipment", "en": "wearable device", "ja": "ウェアラブル端末"}, {"section": "Equipment", "en": "X-ray diffractometer", "ja": "X線回折装置"}, {"section": "Vocabulary 3", "en": "according to", "ja": "～によると"}, {"section": "Vocabulary 3", "en": "axis", "ja": "軸"}, {"section": "Vocabulary 3", "en": "column", "ja": "列、欄"}, {"section": "Vocabulary 3", "en": "dashed line", "ja": "破線"}, {"section": "Vocabulary 3", "en": "decimal", "ja": "小数"}, {"section": "Vocabulary 3", "en": "distribute", "ja": "分配する、割り振る"}, {"section": "Vocabulary 3", "en": "dotted line", "ja": "点線"}, {"section": "Vocabulary 3", "en": "due to", "ja": "～が原因で"}, {"section": "Vocabulary 3", "en": "fraction", "ja": "分数"}, {"section": "Vocabulary 3", "en": "implement", "ja": "実装する、実施する"}, {"section": "Vocabulary 3", "en": "in contrast", "ja": "対照的に"}, {"section": "Vocabulary 3", "en": "indicate", "ja": "示す"}, {"section": "Vocabulary 3", "en": "industry", "ja": "工業、産業"}, {"section": "Vocabulary 3", "en": "manufacturing", "ja": "製造、製造業"}, {"section": "Vocabulary 3", "en": "measure", "ja": "測定する"}, {"section": "Vocabulary 3", "en": "property", "ja": "特性、物性"}, {"section": "Vocabulary 3", "en": "rate", "ja": "割合、率"}, {"section": "Vocabulary 3", "en": "ratio", "ja": "比、比率"}, {"section": "Vocabulary 3", "en": "row", "ja": "行"}, {"section": "Vocabulary 3", "en": "significant", "ja": "かなりの、著しい"}, {"section": "Vocabulary 3", "en": "specification", "ja": "仕様"}, {"section": "Vocabulary 3", "en": "steadily", "ja": "着実に"}, {"section": "Vocabulary 3", "en": "storage capacity", "ja": "記憶容量"}, {"section": "Vocabulary 3", "en": "survey", "ja": "調査、アンケート"}, {"section": "Graphs", "en": "bar graph", "ja": "棒グラフ"}, {"section": "Graphs", "en": "histogram", "ja": "ヒストグラム"}, {"section": "Graphs", "en": "line graph", "ja": "折れ線グラフ"}, {"section": "Graphs", "en": "pie chart", "ja": "円グラフ"}, {"section": "Graphs", "en": "scatter plot", "ja": "散布図"}, {"section": "Graphs", "en": "table", "ja": "表"}];
+let deck=[],idx=0,correct=0,locked=false;
+const $=id=>document.getElementById(id);
+function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
+function norm(s){return s.trim().toLowerCase().replace(/[・、。,\s]+/g,"")}
+function buildSections(){
+  [...new Set(WORDS.map(x=>x.section))].forEach(s=>{const o=document.createElement("option");o.value=s;o.textContent=s;$("section").appendChild(o)})
+}
+function source(){const s=$("section").value;return s==="All"?WORDS:WORDS.filter(x=>x.section===s)}
+function start(){deck=shuffle(source());idx=0;correct=0;locked=false;$("quiz").style.display="block";$("result").style.display="none";show()}
+function makeChoices(item,field){
+  const pool=WORDS.filter(x=>x[field]!==item[field]);
+  return shuffle([item,...shuffle(pool).slice(0,3)]).map(x=>x[field])
+}
+function show(){
+  locked=false;const w=deck[idx],m=$("mode").value;
+  $("count").textContent=`${idx+1} / ${deck.length}`; $("score").textContent=`正解 ${correct}`;
+  $("bar").style.width=`${idx/deck.length*100}%`; $("feedback").className="feedback";$("feedback").textContent="";$("next").style.display="none";
+  let q,label,answer,extra="";
+  if(m.startsWith("ja-en")){q=w.ja;label="日本語の意味";answer=w.en;extra=w.extra?`記号：${w.extra}`:""}
+  else{q=w.en;label="英語";answer=w.ja;extra=w.extra?`記号：${w.extra}`:""}
+  $("question").textContent=q;$("label").textContent=label;$("extra").textContent=extra;
+  const area=$("answerArea");area.innerHTML="";
+  if(m.endsWith("type")){
+    const row=document.createElement("div");row.className="inputrow";
+    const input=document.createElement("input");input.id="typed";input.placeholder=m==="ja-en-type"?"英語のスペルを入力":"日本語の意味を入力";
+    const btn=document.createElement("button");btn.className="primary";btn.textContent="回答";btn.onclick=()=>check(input.value,answer,w);
+    input.onkeydown=e=>{if(e.key==="Enter")check(input.value,answer,w)};
+    row.append(input,btn);area.append(row);setTimeout(()=>input.focus(),30);
+  }else{
+    const choices=document.createElement("div");choices.className="choices";
+    const field=m==="ja-en-choice"?"en":"ja";
+    makeChoices(w,field).forEach(c=>{const b=document.createElement("button");b.className="choice";b.textContent=c;b.onclick=()=>check(c,answer,w);choices.appendChild(b)});
+    area.appendChild(choices);
+  }
+}
+function check(given,answer,w){
+  if(locked||!String(given).trim())return;locked=true;
+  const ok=norm(given)===norm(answer);if(ok)correct++;
+  $("feedback").className="feedback "+(ok?"ok":"bad");
+  $("feedback").innerHTML=ok?`〇 正解<br><b>${w.en}</b>：${w.ja}`:`× 不正解<br>正解：<b>${answer}</b><br>${w.en}：${w.ja}`;
+  $("next").style.display="inline-block";$("score").textContent=`正解 ${correct}`;$("bar").style.width=`${(idx+1)/deck.length*100}%`;
+}
+function nextQ(){if(!locked)return;idx++;if(idx>=deck.length)finish();else show()}
+function finish(){$("quiz").style.display="none";$("result").style.display="block";$("final").textContent=`${correct} / ${deck.length}`;$("msg").textContent=correct===deck.length?"全問正解です！":correct>=deck.length*.8?"よくできました。":"もう一度復習しましょう。"}
+function buildTables(){
+  const groups={};WORDS.forEach(w=>(groups[w.section]??=[]).push(w));
+  $("tables").innerHTML=Object.entries(groups).map(([s,arr])=>`<h3>${s}</h3><table><tr><th>English</th><th>日本語</th></tr>${arr.map(w=>`<tr><td>${w.en}</td><td>${w.ja}</td></tr>`).join("")}</table>`).join("");
+}
+$("next").onclick=nextQ;$("restart").onclick=start;$("again").onclick=start;$("section").onchange=start;$("mode").onchange=start;
+buildSections();buildTables();start();
+</script>
+</body></html>
